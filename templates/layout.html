@@ -4,11 +4,13 @@
 <meta http-equiv="X-UA-Compatible" content="IE=Edge">
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
 <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.0.5/angular.min.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
 <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap.min.css" rel="stylesheet">
 <script>
   var $URL_ROOT = {{ request.url_root|tojson }};
 </script>
 <script src="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/js/bootstrap.min.js"></script>
+<script src="{{ url_for('static', filename='sortable.js') }}"></script>
 <script src="{{ url_for('static', filename='ui-bootstrap-tpls-0.3.0.min.js') }}"></script>
 <script src="{{ url_for('static', filename='worldtime.js') }}"></script>
 <link rel=stylesheet href="{{ url_for('static', filename='style.css') }}">

@@ -24,26 +24,43 @@
         <form class="navbar-form pull-left">
           <input type="text" class="span2" size="16" value="12-02-2012">
         </form>
+        <ul class="nav pull-right">
+          <li class="dropdown">
+            <a class="dropdown-toggle">
+              Actions
+              <b class="caret"></b>
+            </a>
+            <ul class="dropdown-menu">
+              <li><a>Order by offset</a></li>
+              <li><a>Copy to clipboard</a></li>
+              <li><a>Link to this table</a></li>
+            </ul>
+          </li>
+        </ul>
       </div>
     </div>
 
-    <table class="timetable">
-      <tr ng-repeat="row in rows" ng-class="{home: row.isHome}">
-        <th><li class="dropdown">
-          <a class="dropdown-toggle">{{ row.city.name }}</a>
-          <ul class="dropdown-menu">
-            <li><a ng-click="setAsHome(row.city.key)" ng-hide="row.isHome">Set as home</a></li>
-            <li><a ng-click="removeRow(row.city.key)">Remove</a></li>
-          </ul>
-        </li></th>
-        <td ng-repeat="cell in row.cells">
-          <div class=slot>
-            <span class=hour>{{ cell.slot.hour }}</span>
-            <span class=minute>{{ cell.slot.minute|padint:2 }}</span>
-          </div>
-        </td>
-      </tr>
-    </table>
+    <ul class="timetable" ui-sortable="{axis: 'y'}" ng-model="rows">
+      <li ng-repeat="row in rows" class="time-row" ng-class="{home: row.isHome}">
+        <table>
+          <tr>
+            <th><li class="dropdown">
+              <a class="dropdown-toggle">{{ row.city.name }}</a>
+              <ul class="dropdown-menu">
+                <li><a ng-click="setAsHome(row.city.key)" ng-hide="row.isHome">Set as home</a></li>
+                <li><a ng-click="removeRow(row.city.key)">Remove</a></li>
+              </ul>
+            </li></th>
+            <td ng-repeat="cell in row.cells">
+              <div class=slot>
+                <span class=hour>{{ cell.slot.hour }}</span>
+                <span class=minute>{{ cell.slot.minute|padint:2 }}</span>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </li>
+    </ul>
   </div>
   {% endraw %}
 {% endblock %}

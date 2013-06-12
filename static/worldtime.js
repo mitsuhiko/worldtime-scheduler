@@ -1,6 +1,6 @@
 'use strict';
 
-var worldtime = angular.module('worldtime', ['ui.bootstrap']);
+var worldtime = angular.module('worldtime', ['ui.bootstrap', 'ui.sortable']);
 
 (function() {
 

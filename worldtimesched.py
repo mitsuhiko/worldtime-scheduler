@@ -40,7 +40,7 @@ def get_city(city_key):
     abort(404)
 
 
-def find_cities(q, find_one=False):
+def _find_cities(q, find_one=False):
     results = []
     _push = results.append
     q = q.strip().lower()
@@ -63,8 +63,8 @@ def find_cities(q, find_one=False):
         return exact_match
 
     results.sort(key=lambda x: (x[0], -x[1]['population']))
-    if exact_match:
-        return results and results[0] or None
+    if find_one:
+        return results and results[0][1] or None
     return results
 
 
@@ -99,7 +99,7 @@ def index():
 
 @app.route('/api/find_timezone')
 def api_find_timezone():
-    result = find_cities(request.args['q'], find_one=True)
+    result = _find_cities(request.args['q'], find_one=True)
     if result is not None:
         result = expose_city(result)
     return json.jsonify(result=result)
@@ -108,7 +108,7 @@ def api_find_timezone():
 @app.route('/api/find_timezones')
 def api_find_timezones():
     limit = min(request.args.get('limit', type=int, default=8), 50)
-    results = find_cities(request.args['q'])
+    results = _find_cities(request.args['q'])
     exported = []
     for _, city in results[:limit]:
         exported.append(expose_city(city))
