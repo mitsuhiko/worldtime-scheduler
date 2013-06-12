@@ -1,0 +1,49 @@
+{% extends 'layout.html' %}
+{% block title %}Welcome{% endblock %}
+{% block body %}
+  <p>
+    Want to schedule a meeting that spans multiple timezones?  This handy
+    little website can help you with that.  Just add the names of the timezones
+    or cities and select your time slots.
+
+  {% raw %}
+  <div class="container timezone-table" ng-controller="TimezoneTableCtrl">
+    <div class="navbar">
+      <div class="navbar-inner schedule-bar">
+        <a class="brand">Schedule</a>
+        <div class="navbar-text navbar-caption pull-left">Add city:</div>
+        <form class="navbar-form pull-left" ng-controller="CityTypeaheadCtrl"
+              ng-submit="addSuggestedRow()">
+          <div class="control-group" ng-class="{error: failed}">
+            <input type="text" class="span3" autocomplete=off name=city ng-model="timezone"
+              typeahead="state for state in getSuggestions($viewValue)">
+            <button type="submit" class="btn">Add</button>
+          </div>
+        </form>
+        <div class="navbar-text navbar-caption pull-left">Change date:</div>
+        <form class="navbar-form pull-left">
+          <input type="text" class="span2" size="16" value="12-02-2012">
+        </form>
+      </div>
+    </div>
+
+    <table class="timetable">
+      <tr ng-repeat="row in rows" ng-class="{home: row.isHome}">
+        <th><li class="dropdown">
+          <a class="dropdown-toggle">{{ row.city.name }}</a>
+          <ul class="dropdown-menu">
+            <li><a ng-click="setAsHome(row.city.key)" ng-hide="row.isHome">Set as home</a></li>
+            <li><a ng-click="removeRow(row.city.key)">Remove</a></li>
+          </ul>
+        </li></th>
+        <td ng-repeat="cell in row.cells">
+          <div class=slot>
+            <span class=hour>{{ cell.slot.hour }}</span>
+            <span class=minute>{{ cell.slot.minute|padint:2 }}</span>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>
+  {% endraw %}
+{% endblock %}

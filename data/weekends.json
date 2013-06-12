@@ -1,0 +1,15 @@
+{
+  "weekend_start": {
+    "thu": ["AF", "DZ", "IR", "OM", "SA", "YE"],
+    "fri": ["AE", "BH", "EG", "IL", "IQ", "JO", "KW",
+            "LY", "MA", "QA", "SD", "SY", "TN"],
+    "sat": ["*"],
+    "sun": ["IN"]
+  },
+  "weekend_end": {
+    "fri": ["AF", "DZ", "IR", "OM", "SA", "YE"],
+    "sat": ["AE", "BH", "EG", "IL", "IQ", "JO", "KW",
+            "LY", "MA", "QA", "SD", "SY", "TN"],
+    "sun": ["*"] 
+  }
+}
