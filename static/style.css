@@ -1,4 +1,5 @@
-@import url(http://fonts.googleapis.com/css?family=Roboto:400,300);
+@import url(http://fonts.googleapis.com/css?family=Roboto:500,400,300);
+@import url(http://fonts.googleapis.com/css?family=Roboto+Condensed:400,300);
 
 body, input {
     font-family: 'Roboto', sans-serif;
@@ -39,6 +40,11 @@ h2 {
     padding: 0;
 }
 
+.timetable table {
+    width: 100%;
+    table-layout: fixed;
+}
+
 .timetable li.time-row {
     background: white;
     border: 1px solid rgb(212, 212, 212);
@@ -47,13 +53,9 @@ h2 {
 }
 
 .timetable li.time-row.home {
-    background-color: rgb(250, 250, 250);
-    background-image: linear-gradient(to bottom, rgb(255, 255, 255), rgb(242, 242, 242));
+    background-color: #eee;
+    background-image: linear-gradient(to bottom, #fafafa, #eee);
     background-repeat: repeat-x;
-}
-
-.timetable td, .timetable th {
-    padding: 3px 2px 3px 0;
 }
 
 .timetable li.dropdown {
@@ -64,47 +66,117 @@ h2 {
     cursor: pointer;
 }
 
-.timetable td:last-child {
-    padding-right: 3px;
+.timetable .cells td, .timetable th {
+    padding: 3px 0;
 }
 
-.timetable th {
+.timetable .cells td.handle {
+    width: 10px;
+    background-color: #ddd;
+    background-image: linear-gradient(transparent 50%, rgba(255,255,255,.5) 50%);
+    background-size: 10px 10px;
+    cursor: pointer;
+}
+
+.timetable .cells .offset {
+    width: 32px;
+    padding: 0 10px 0 0;
+    text-align: right;
+}
+
+.timetable .cells .offset em {
+    font-family: 'Roboto Condensed';
+    font-weight: 400;
+    font-size: 17px;
+    font-style: normal;
+}
+
+.timetable .cells .location {
     text-align: left;
-    padding-left: 10px;
     padding-right: 10px;
     font-size: 13px;
-    width: 240px;
+    font-weight: 400;
 }
 
-.timetable tr {
-    box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.067);
+.timetable .locationname {
+    font-weight: 500;
 }
 
-.timetable td {
+.timetable .country {
+    color: #666;
+}
+
+.timetable .zones {
+    margin-left: 5px;
+}
+
+.timetable .zones em {
+    font-family: 'Roboto Condensed';
+    font-size: 11px;
+    margin: 0 1px;
+    padding: 0 2px;
+    color: #444;
+    background: #ddd;
+    border: 1px solid #ccc;
+    border-radius: 2px;
+    font-style: normal;
+    cursor: pointer;
+}
+
+.timetable .cells td {
     font-weight: 300;
     text-align: center;
+    vertical-align: middle;
 }
 
-.timetable td span.hour {
+.timetable .hour {
     display: block;
-    font-size: 18px;
+    font-family: 'Roboto Condensed';
+    font-size: 19px;
+    letter-spacing: -1px;
     font-weight: 400;
     line-height: 25px;
 }
 
-.timetable td span.minute {
+.timetable .minute {
     display: block;
     font-size: 11px;
     font-weight: 300;
     line-height: 12px;
+    margin-top: -2px;
     color: #888;
 }
 
+.timetable .cells .slotwrapper:last-child {
+    padding-right: 3px;
+}
+
+.timetable .slotwrapper {
+    width: 26px;
+}
+
 .timetable .slot {
+    margin: 0 0 0 1px;
     padding: 0;
     background: white;
     border: 1px solid #ccc;
     height: 40px;
     border-radius: 3px;
-    width: 26px;
+}
+
+.timetable .slot.night {
+    background: #285770;
+    color: white;
+}
+
+.timetable .slot.morning,
+.timetable .slot.evening {
+    background: #699AB5;
+    color: white;
+}
+
+.timetable .slot.night .minute,
+.timetable .slot.morning .minute,
+.timetable .slot.evening .minute {
+    color: #B5D5E6;
 }

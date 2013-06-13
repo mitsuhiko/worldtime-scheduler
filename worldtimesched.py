@@ -40,7 +40,7 @@ def get_city(city_key):
     abort(404)
 
 
-def _find_cities(q, find_one=False):
+def _find_cities(q, find_one=False, limit=None):
     results = []
     _push = results.append
     q = q.strip().lower()
@@ -52,20 +52,25 @@ def _find_cities(q, find_one=False):
     if qw:
         for city in cities.values():
             if city['search_name'] == q:
-                _push((0, city))
+                _push((0, 0, city))
                 exact_match = city
-            elif search_words_match(qw, city['sw_prim']):
-                _push((1, city))
-            elif search_words_match(qw, city['sw_sec']):
-                _push((2, city))
+                continue
+            match_pos = search_words_match(qw, city['sw_prim'])
+            if match_pos >= 0:
+                _push((1, match_pos, city))
+                continue
+            match_pos = search_words_match(qw, city['sw_sec'])
+            if match_pos >= 0:
+                _push((2, match_pos, city))
+                continue
 
     if find_one and exact_match is not None:
         return exact_match
 
-    results.sort(key=lambda x: (x[0], -x[1]['population']))
+    results.sort(key=lambda x: (x[0], x[1], -x[2]['population']))
     if find_one:
         return results and results[0][1] or None
-    return results
+    return [x[2] for x in results[:limit]]
 
 
 def expose_city(city):
@@ -83,13 +88,15 @@ def dump_local_date(d):
 
 
 def search_words_match(search_words, reference_words):
+    lowest_match = len(reference_words) + 1
     for search_word in search_words:
-        for reference_word in reference_words:
+        for idx, reference_word in enumerate(reference_words):
             if reference_word.startswith(search_word):
+                lowest_match = min(lowest_match, idx)
                 break
         else:
-            return False
-    return True
+            return -1
+    return lowest_match
 
 
 @app.route('/')
@@ -108,17 +115,14 @@ def api_find_timezone():
 @app.route('/api/find_timezones')
 def api_find_timezones():
     limit = min(request.args.get('limit', type=int, default=8), 50)
-    results = _find_cities(request.args['q'])
-    exported = []
-    for _, city in results[:limit]:
-        exported.append(expose_city(city))
-    return json.jsonify(results=exported)
+    results = _find_cities(request.args['q'], limit=limit)
+    return json.jsonify(results=[expose_city(c) for c in results])
 
 
 @app.route('/api/row')
 def api_get_row():
-    away_city = get_city(request.args['away'])
-    away_tz = pytz.timezone(away_city['timezone'])
+    city = get_city(request.args['away'])
+    away_tz = pytz.timezone(city['timezone'])
     if 'home' in request.args:
         home_city = get_city(request.args['home'])
         home_tz = pytz.timezone(home_city['timezone'])
@@ -129,16 +133,21 @@ def api_get_row():
 
     try:
         year, month, day = map(int, request.args['date'].split('-', 2))
-        day_utc_start = pytz.UTC.normalize((home_tz or away_tz).localize(
+        step_tz = home_tz or away_tz
+        day_utc_start = pytz.UTC.normalize(step_tz.localize(
             datetime(year, month, day)).astimezone(pytz.UTC))
+        day_utc_end = pytz.UTC.normalize(step_tz.localize(
+            datetime(year, month, day) + timedelta(days=1)).astimezone(pytz.UTC))
     except (TypeError, ValueError):
         abort(400)
 
     row = []
     hiter = day_utc_start
     all_offsets = []
+    zones_found = set()
+    zones = []
 
-    for hour in range(24):
+    while hiter < day_utc_end:
         ht = away_tz.normalize(hiter.astimezone(away_tz))
         uc = pytz.UTC.normalize(ht.astimezone(pytz.UTC))
         item = {
@@ -150,16 +159,26 @@ def api_get_row():
             all_offsets.append((ht.replace(tzinfo=None) -
                 hh.replace(tzinfo=None)).total_seconds())
         row.append(item)
+        zone = ht.strftime('%Z')
+        if zone not in zones_found:
+            zones_found.add(zone)
+            zones.append({
+                'name': zone,
+                'offset': ht.utcoffset().total_seconds(),
+                'is_dst': ht.dst().total_seconds() > 0,
+            })
         hiter += timedelta(hours=1)
 
-    rv = {
-        'away_city': expose_city(away_city),
+    if not all_offsets:
+        all_offsets = [0]
+    mean_offset = sorted(all_offsets)[len(all_offsets) // 2]
+
+    return json.jsonify({
+        'city': expose_city(city),
+        'zones': zones,
         'row_start': day_utc_start,
         'row': row,
-    }
-    if home_tz is not None:
-        mean_offset = sorted(all_offsets)[len(all_offsets) // 2]
-        rv['home_away_offsets'] = {
+        'offsets': {
             'all': sorted(set(all_offsets)),
             'min': min(all_offsets),
             'max': max(all_offsets),
@@ -167,8 +186,7 @@ def api_get_row():
             'day_end': all_offsets[-1],
             'mean': mean_offset
         }
-
-    return json.jsonify(rv)
+    })
 
 
 if __name__ == '__main__':

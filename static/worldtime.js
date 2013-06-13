@@ -70,11 +70,13 @@ var worldtime = angular.module('worldtime', ['ui.bootstrap', 'ui.sortable']);
 
     function _makeRow(result) {
       return {
-        locationKey: result.away_city.key,
-        city: result.away_city,
+        locationKey: result.city.key,
+        city: result.city,
         cells: _processCells(result.row),
+        zones: result.zones,
+        offsets: result.offsets,
         isHome: $scope.homeRow &&
-          $scope.homeRow.locationKey === result.away_city.key
+          $scope.homeRow.locationKey === result.city.key
       };
     }
 
@@ -138,6 +140,26 @@ var worldtime = angular.module('worldtime', ['ui.bootstrap', 'ui.sortable']);
           _refreshRow(i, row.locationKey);
         }
     };
+
+    $scope.sortByOffset = function() {
+      $scope.sortByFunc(function(a, b) {
+        return a.offsets.mean - b.offsets.mean;
+      });
+    };
+
+    $scope.sortByName = function() {
+      $scope.sortByFunc(function(a, b) {
+        a = a.city.full_name.toLowerCase();
+        b = b.city.full_name.toLowerCase();
+        return a == b ? 0 : a < b ? -1 : 1;
+      });
+    };
+
+    $scope.sortByFunc = function(sortFunc) {
+      var copy = $scope.rows.slice(0);
+      copy.sort(sortFunc);
+      $scope.rows = copy;
+    };
   });
 
 
@@ -188,4 +210,29 @@ var worldtime = angular.module('worldtime', ['ui.bootstrap', 'ui.sortable']);
     };
   });
 
+  worldtime.filter('describezone', function() {
+    return function(zone) {
+      var rv = 'UTC';
+      var hours = zone.offset / 3600;
+      if (hours != 0)
+        rv += ' ' + (hours > 0 ? '+' : '') + hours + ' hours';
+      if (zone.is_dst)
+        rv += ' (DST observed)';
+      return rv;
+    };
+  });
+
+  worldtime.filter('describeoffset', function() {
+    return function(offsets) {
+      var hours = offsets.mean / 3600;
+      return hours == 0 ? 'Your home' : (hours > 0 ? '+' : '') + hours + ' hours from home';
+    };
+  });
+
+  worldtime.filter('offsetformat', function() {
+    return function(offsets) {
+      var hours = offsets.mean / 3600;
+      return (hours > 0 ? '+' : '') + hours;
+    };
+  });
 })();

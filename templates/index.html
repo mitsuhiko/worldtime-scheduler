@@ -31,35 +31,49 @@
               <b class="caret"></b>
             </a>
             <ul class="dropdown-menu">
-              <li><a>Order by offset</a></li>
-              <li><a>Copy to clipboard</a></li>
-              <li><a>Link to this table</a></li>
+              <li><a ng-click="sortByOffset()">Sort by offset</a>
+              <li><a ng-click="sortByName()">Sort by name</a>
+              <li class="divider">
+              <li><a>Copy to clipboard</a>
+              <li><a>Link to this table</a>
             </ul>
-          </li>
         </ul>
       </div>
     </div>
 
-    <ul class="timetable" ui-sortable="{axis: 'y'}" ng-model="rows">
+    <ul class="timetable" ui-sortable="{axis: 'y', handle: 'td.handle', cursor: 'row-resize'}" ng-model="rows">
       <li ng-repeat="row in rows" class="time-row" ng-class="{home: row.isHome}">
         <table>
-          <tr>
-            <th><li class="dropdown">
-              <a class="dropdown-toggle">{{ row.city.name }}</a>
-              <ul class="dropdown-menu">
-                <li><a ng-click="setAsHome(row.city.key)" ng-hide="row.isHome">Set as home</a></li>
-                <li><a ng-click="removeRow(row.city.key)">Remove</a></li>
-              </ul>
-            </li></th>
-            <td ng-repeat="cell in row.cells">
-              <div class=slot>
+          <tr class="cells">
+            <td class="handle"><div></div>
+            <td class="offset"><span
+                tooltip-placement="bottom"
+                tooltip="{{ row.offsets|describeoffset }}"><em>{{ row.offsets|offsetformat }}</em></span>
+            <th class="location">
+              <li class="dropdown">
+                <a class="dropdown-toggle locationname">{{ row.city.name }}</a>
+                <ul class="dropdown-menu">
+                  <li><a ng-click="setAsHome(row.city.key)" ng-hide="row.isHome">Set as home</a>
+                  <li><a ng-click="removeRow(row.city.key)">Remove</a>
+                </ul>
+              </li>
+              <span class="country">{{ row.city.country }}</span>
+              <span class="zones">
+                <em ng-repeat="zone in row.zones"
+                  tooltip-placement="bottom"
+                  tooltip="{{ zone|describezone }}">{{ zone.name }}</em>
+              </span>
+            <td ng-repeat="cell in row.cells" class="slotwrapper">
+              <div class=slot ng-class="{
+                  night: cell.slot.hour >= 22 || cell.slot.hour < 6,
+                  morning: cell.slot.hour >= 6 && cell.slot.hour < 8,
+                  day: cell.slot.hour >= 8 && cell.slot.hour < 18,
+                  evening: cell.slot.hour >= 18 && cell.slot.hour < 22
+                }">
                 <span class=hour>{{ cell.slot.hour }}</span>
                 <span class=minute>{{ cell.slot.minute|padint:2 }}</span>
               </div>
-            </td>
-          </tr>
         </table>
-      </li>
     </ul>
   </div>
   {% endraw %}
