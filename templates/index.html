@@ -11,18 +11,21 @@
     <div class="navbar">
       <div class="navbar-inner schedule-bar">
         <a class="brand">Schedule</a>
-        <div class="navbar-text navbar-caption pull-left">Add city:</div>
+        <div class="navbar-text navbar-caption pull-left">City:</div>
         <form class="navbar-form pull-left" ng-controller="CityTypeaheadCtrl"
               ng-submit="addSuggestedRow()">
-          <div class="control-group" ng-class="{error: failed}">
-            <input type="text" class="span3" autocomplete=off name=city ng-model="timezone"
+          <div class="control-group" ng-class="{error: cityFailed}">
+            <input type="text" class="span3" autocomplete=off name=city ng-model="city"
               typeahead="state for state in getSuggestions($viewValue)">
             <button type="submit" class="btn">Add</button>
           </div>
         </form>
-        <div class="navbar-text navbar-caption pull-left">Change date:</div>
+        <div class="navbar-text navbar-caption pull-left">Date:</div>
         <form class="navbar-form pull-left">
-          <input type="text" class="span2" size="16" value="12-02-2012">
+          <div class="input-append" id="datepicker" data-date="{{ selectedDay }}">
+            <input class="span2" type="text" value="{{ selectedDay }}" readonly>
+            <span class="add-on"><i class="icon-calendar"></i></span>
+          </div>
         </form>
         <ul class="nav pull-right">
           <li class="dropdown">

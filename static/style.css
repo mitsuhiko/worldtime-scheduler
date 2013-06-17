@@ -33,6 +33,22 @@ h2 {
 .schedule-bar           { margin: 20px 0; }
 .navbar .control-group  { margin: 0; padding: 0; }
 
+/* datepicker */
+#datepicker {
+    margin: 5px 0 0 0;
+    padding: 0;
+}
+
+.datepicker-days .today {
+    font-weight: bold;
+    background-image: linear-gradient(to bottom, #eee, #bbb);
+    background-repeat: repeat-x;
+}
+
+.datepicker-days .past {
+    color: #aaa;
+}
+
 /* timetable */
 .timetable {
     list-style: none;

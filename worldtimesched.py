@@ -1,7 +1,7 @@
 import re
 import pytz
 from datetime import datetime, timedelta
-from flask import Flask, json, request, abort, render_template
+from flask import Flask, json, request, render_template
 
 
 app = Flask(__name__)
@@ -10,6 +10,31 @@ app.config.update(
 )
 
 _split_re = re.compile(r'[\t !@#$%^&*()/:;,._-]+')
+
+
+class APIException(Exception):
+
+    def __init__(self, message, error, data=None):
+        self.message = message
+        self.error = error
+        self.data = data or {}
+
+    def to_dict(self):
+        return {
+            'message': self.message,
+            'error': self.error,
+            'data': self.data
+        }
+
+    def to_response(self):
+        rv = json.jsonify(self.to_dict())
+        rv.status_code = 400
+        return rv
+
+
+@app.errorhandler(APIException)
+def on_api_exception(error):
+    return error.to_response()
 
 
 def _load_data():
@@ -37,7 +62,15 @@ def get_city(city_key):
     rv = cities.get(city_key)
     if rv is not None:
         return rv
-    abort(404)
+    raise APIException('City not found', 'city_not_found')
+
+
+def _make_date(input):
+    try:
+        day, month, year = map(int, input.split('-', 2))
+        return datetime(year, month, day)
+    except (TypeError, ValueError):
+        return None
 
 
 def _find_cities(q, find_one=False, limit=None):
@@ -131,15 +164,15 @@ def api_get_row():
 
     # XXX: add actual timezones (PSD, GMT etc.)
 
-    try:
-        year, month, day = map(int, request.args['date'].split('-', 2))
-        step_tz = home_tz or away_tz
-        day_utc_start = pytz.UTC.normalize(step_tz.localize(
-            datetime(year, month, day)).astimezone(pytz.UTC))
-        day_utc_end = pytz.UTC.normalize(step_tz.localize(
-            datetime(year, month, day) + timedelta(days=1)).astimezone(pytz.UTC))
-    except (TypeError, ValueError):
-        abort(400)
+    date = _make_date(request.args['date'])
+    if date is None:
+        raise APIException('Invalid date submitted', 'invalid_date')
+
+    step_tz = home_tz or away_tz
+    day_utc_start = pytz.UTC.normalize(step_tz.localize(
+        date).astimezone(pytz.UTC))
+    day_utc_end = pytz.UTC.normalize(step_tz.localize(
+        date + timedelta(days=1)).astimezone(pytz.UTC))
 
     row = []
     hiter = day_utc_start
