@@ -98,6 +98,7 @@ h2 {
     width: 32px;
     padding: 0 10px 0 0;
     text-align: right;
+    cursor: pointer;
 }
 
 .timetable .cells .offset em {
@@ -169,6 +170,7 @@ h2 {
 
 .timetable .slotwrapper {
     width: 26px;
+    cursor: pointer;
 }
 
 .timetable .slot {
@@ -185,6 +187,11 @@ h2 {
     color: white;
 }
 
+.timetable .slot.daystart {
+    background: black;
+    color: white;
+}
+
 .timetable .slot.morning,
 .timetable .slot.evening {
     background: #699AB5;
@@ -195,4 +202,8 @@ h2 {
 .timetable .slot.morning .minute,
 .timetable .slot.evening .minute {
     color: #B5D5E6;
+}
+
+.timetable .slot.daystart .minute {
+    color: #aaa;
 }

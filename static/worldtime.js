@@ -74,8 +74,22 @@ var worldtime = angular.module('worldtime', ['ui.bootstrap', 'ui.sortable']);
     )
   };
 
+  DateTime.prototype.getMonthName = function() {
+    var months = ['Januar', 'February', 'March', 'April', 'May', 'June',
+                  'July', 'August', 'September', 'October', 'November', 'December'];
+    return months[this.month - 1];
+  };
+
   DateTime.prototype.toDateString = function() {
     return padInt(this.day, 2) + '-' + padInt(this.month, 2) + '-' + this.year;
+  };
+
+  DateTime.prototype.toString = function() {
+    var rv = this.getMonthName() + ' ' + this.day + ', ' + this.year + ' ' +
+      padInt(this.hour, 2) + ':' + padInt(this.minute, 2);
+    if (this.zone)
+      rv += ' (' + this.zone + ')';
+    return rv;
   };
 
   function _processCells(cells) {
@@ -290,6 +304,12 @@ var worldtime = angular.module('worldtime', ['ui.bootstrap', 'ui.sortable']);
     return function(offsets) {
       var hours = offsets.mean / 3600;
       return (hours > 0 ? '+' : '') + hours;
+    };
+  });
+
+  worldtime.filter('datetimeformat', function() {
+    return function(dt) {
+      return dt.toString();
     };
   });
 })();

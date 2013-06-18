@@ -68,11 +68,12 @@
               </span>
             <td ng-repeat="cell in row.cells" class="slotwrapper">
               <div class=slot ng-class="{
+                  daystart: cell.slot.hour == 0,
                   night: cell.slot.hour >= 22 || cell.slot.hour < 6,
                   morning: cell.slot.hour >= 6 && cell.slot.hour < 8,
                   day: cell.slot.hour >= 8 && cell.slot.hour < 18,
                   evening: cell.slot.hour >= 18 && cell.slot.hour < 22
-                }">
+                }" tooltip-placement="bottom" tooltip="{{ cell.slot|datetimeformat }}">
                 <span class=hour>{{ cell.slot.hour }}</span>
                 <span class=minute>{{ cell.slot.minute|padint:2 }}</span>
               </div>
