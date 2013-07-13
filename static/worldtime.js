@@ -112,7 +112,7 @@ var worldtime = angular.module('worldtime', ['ui.bootstrap', 'ui.sortable']);
 
     /* current marker hover */
     var currentMarker = $('<div class=marker></div>')
-      .appendTo('body');
+      .appendTo('.timetable');
     var table = $('.timetable')
       .bind('mousemove', function() {
         var wrapper = document.querySelectorAll('td.slotwrapper:hover')[0];
@@ -122,13 +122,7 @@ var worldtime = angular.module('worldtime', ['ui.bootstrap', 'ui.sortable']);
         if (idx === $scope.lastMarker)
           return
         $scope.lastMarker = idx;
-        var tableOffset = table.offset();
-        currentMarker.css({
-          left: $(wrapper).offset().left - 2 + 'px',
-          top: tableOffset.top - 4 + 'px',
-          height: table.outerHeight() + 3 + 'px',
-          width: $('div.slot', wrapper).outerWidth() + 2 + 'px'
-        }).show();
+        $scope.moveMarker();
       });
 
     $('#datepicker').datepicker({
@@ -211,6 +205,10 @@ var worldtime = angular.module('worldtime', ['ui.bootstrap', 'ui.sortable']);
 
     $scope.addSuggestedRow = function() {
       var that = this;
+      if (this.zone == '') {
+        $scope.zoneFailed = false;
+        return;
+      }
       return $http.get($URL_ROOT + 'api/find_timezone', {
         params: {q: this.zone}
       }).then(function(response) {
@@ -229,6 +227,7 @@ var worldtime = angular.module('worldtime', ['ui.bootstrap', 'ui.sortable']);
           if (!$scope.homeRow)
             $scope.setAsHome(timezone.key);
         }, function(error) {
+          $scope.zoneFailed = false;
           if (error.data.error == 'zone_not_found') {
             $scope.zoneFailed = true;
           }
@@ -279,6 +278,27 @@ var worldtime = angular.module('worldtime', ['ui.bootstrap', 'ui.sortable']);
       copy.sort(sortFunc);
       $scope.rows = copy;
     };
+
+    $scope.moveMarker = function() {
+      if (!$scope.lastMarker)
+        return;
+      var wrapper = $($('td.cell-index-' + $scope.lastMarker)[0]);
+      var tableOffset = table.offset();
+      currentMarker.css({
+        left: $(wrapper).offset().left - 2 + 'px',
+        top: tableOffset.top - 4 + 'px',
+        height: $scope.rows.length * 76 + 'px',
+        width: $('div.slot', wrapper).outerWidth() + 2 + 'px'
+      }).show();
+    };
+
+    // make sure marker stays in sync
+    $scope.$watch('rows.length', function(newVal, oldVal) {
+      $scope.moveMarker();
+    });
+    $(window).bind('resize', function() {
+      $scope.moveMarker();
+    });
   });
 
 
