@@ -39,6 +39,10 @@ h2 {
     padding: 0;
 }
 
+#datepicker span.add-on {
+    cursor: pointer;
+}
+
 .datepicker-days .today {
     font-weight: bold;
     background-image: linear-gradient(to bottom, #eee, #bbb);

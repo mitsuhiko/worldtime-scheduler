@@ -2,6 +2,7 @@ import re
 import pytz
 from datetime import datetime, timedelta
 from flask import Flask, json, request, render_template
+from babel.dates import get_next_timezone_transition
 
 
 app = Flask(__name__)
@@ -47,22 +48,54 @@ def _load_data():
             city = cities[city_key]
             country_name = countries[city['country']]['name']
             city['key'] = city_key
+            city['type'] = 'city'
             city['full_display_name'] = city['display_name'] + ', ' + country_name
             city['search_name'] = city['full_display_name'].lower()
             city['sw_prim'] = city['display_name'].lower().split()
             city['sw_sec'] = city['sw_prim'] + country_name.lower().split()
 
-    return countries, cities
+    with app.open_resource('data/timezones.json') as f:
+        timezones = json.load(f)['timezones']
+        for timezone_key in timezones:
+            timezone = timezones[timezone_key]
+            timezone['key'] = timezone_key
+            timezone['timezone'] = timezone_key
+            timezone['type'] = 'timezone'
+            timezone['full_display_name'] = '%s (%s)' % (
+                timezone['name'],
+                timezone['short']
+            )
+            timezone['search_name'] = timezone['full_display_name'].lower()
+            timezone['sw'] = (timezone['name'] + ' ' + \
+                timezone['short']).replace('/', ' ').lower().split()
+
+    return countries, cities, timezones
 
 
-countries, cities = _load_data()
+countries, cities, timezones = _load_data()
 
 
-def get_city(city_key):
-    rv = cities.get(city_key)
+def get_zone(key):
+    rv = timezones.get(key)
     if rv is not None:
         return rv
-    raise APIException('City not found', 'city_not_found')
+    rv = cities.get(key)
+    if rv is not None:
+        return rv
+    raise APIException('Zone not found', 'zone_not_found')
+
+
+def get_next_transition(timezone, dt=None):
+    rv = get_next_timezone_transition(timezone, dt)
+    if rv is None:
+        return None
+    return {
+        'activates': rv.activates,
+        'from_offset': rv.from_offset,
+        'to_offset': rv.to_offset,
+        'from_tz': rv.from_tz,
+        'to_tz': rv.to_tz
+    }
 
 
 def _make_date(input):
@@ -73,7 +106,7 @@ def _make_date(input):
         return None
 
 
-def _find_cities(q, find_one=False, limit=None):
+def _find_timezones(q, find_one=False, limit=None):
     results = []
     _push = results.append
     q = q.strip().lower()
@@ -83,6 +116,15 @@ def _find_cities(q, find_one=False, limit=None):
     # XXX: add actual timezones (PSD, GMT etc.)
 
     if qw:
+        for timezone in timezones.values():
+            if timezone['search_name'] == q:
+                _push((0, 0, timezone))
+                exact_match = timezone
+                continue
+            match_pos = search_words_match(qw, timezone['sw'])
+            if match_pos >= 0:
+                _push((1, match_pos, timezone))
+                continue
         for city in cities.values():
             if city['search_name'] == q:
                 _push((0, 0, city))
@@ -100,19 +142,30 @@ def _find_cities(q, find_one=False, limit=None):
     if find_one and exact_match is not None:
         return exact_match
 
-    results.sort(key=lambda x: (x[0], x[1], -x[2]['population']))
+    results.sort(key=lambda x: (x[0], x[1],
+        -(x[2]['type'] == 'timezone'), -x[2].get('population', 0)))
     if find_one:
         return results and results[0][1] or None
     return [x[2] for x in results[:limit]]
 
 
-def expose_city(city):
+def expose_timezone(d):
+    if d['type'] == 'timezone':
+        return {
+            'timezone': d['key'],
+            'key': d['key'],
+            'name': d['name'],
+            'full_name': d['full_display_name'],
+            'tz_short': d['short'],
+            'country': None
+        }
     return {
-        'timezone': city['timezone'],
-        'name': city['display_name'],
-        'full_name': city['full_display_name'],
-        'country': countries[city['country']]['name'],
-        'key': city['key']
+        'timezone': d['timezone'],
+        'key': d['key'],
+        'name': d['display_name'],
+        'full_name': d['full_display_name'],
+        'country': countries[d['country']]['name'],
+        'tz_short': None
     }
 
 
@@ -139,26 +192,26 @@ def index():
 
 @app.route('/api/find_timezone')
 def api_find_timezone():
-    result = _find_cities(request.args['q'], find_one=True)
+    result = _find_timezones(request.args['q'], find_one=True)
     if result is not None:
-        result = expose_city(result)
+        result = expose_timezone(result)
     return json.jsonify(result=result)
 
 
 @app.route('/api/find_timezones')
 def api_find_timezones():
     limit = min(request.args.get('limit', type=int, default=8), 50)
-    results = _find_cities(request.args['q'], limit=limit)
-    return json.jsonify(results=[expose_city(c) for c in results])
+    results = _find_timezones(request.args['q'], limit=limit)
+    return json.jsonify(results=[expose_timezone(c) for c in results])
 
 
 @app.route('/api/row')
 def api_get_row():
-    city = get_city(request.args['away'])
-    away_tz = pytz.timezone(city['timezone'])
+    zone = get_zone(request.args['away'])
+    away_tz = pytz.timezone(zone['timezone'])
     if 'home' in request.args:
-        home_city = get_city(request.args['home'])
-        home_tz = pytz.timezone(home_city['timezone'])
+        home_zone = get_zone(request.args['home'])
+        home_tz = pytz.timezone(home_zone['timezone'])
     else:
         home_tz = None
 
@@ -192,11 +245,11 @@ def api_get_row():
             all_offsets.append((ht.replace(tzinfo=None) -
                 hh.replace(tzinfo=None)).total_seconds())
         row.append(item)
-        zone = ht.strftime('%Z')
-        if zone not in zones_found:
-            zones_found.add(zone)
+        zone_code = ht.strftime('%Z')
+        if zone_code not in zones_found:
+            zones_found.add(zone_code)
             zones.append({
-                'name': zone,
+                'name': zone_code,
                 'offset': ht.utcoffset().total_seconds(),
                 'is_dst': ht.dst().total_seconds() > 0,
             })
@@ -207,10 +260,11 @@ def api_get_row():
     mean_offset = sorted(all_offsets)[len(all_offsets) // 2]
 
     return json.jsonify({
-        'city': expose_city(city),
+        'zone': expose_timezone(zone),
         'zones': zones,
         'row_start': day_utc_start,
         'row': row,
+        'next_transition': get_next_transition(away_tz, day_utc_start),
         'offsets': {
             'all': sorted(set(all_offsets)),
             'min': min(all_offsets),

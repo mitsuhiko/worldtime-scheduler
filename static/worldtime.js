@@ -105,9 +105,9 @@ var worldtime = angular.module('worldtime', ['ui.bootstrap', 'ui.sortable']);
   worldtime.controller('TimezoneTableCtrl', function($scope, $http) {
     $scope.rows = [];
     $scope.homeRow = null;
-    $scope.city = '';
+    $scope.zone = '';
     $scope.selectedDay = DateTime.now().toDateString();
-    $scope.cityFailed = false;
+    $scope.zoneFailed = false;
 
     $('#datepicker').datepicker({
       format: 'dd-mm-yyyy',
@@ -139,13 +139,13 @@ var worldtime = angular.module('worldtime', ['ui.bootstrap', 'ui.sortable']);
 
     function _makeRow(result) {
       return {
-        locationKey: result.city.key,
-        city: result.city,
+        locationKey: result.zone.key,
+        zone: result.zone,
         cells: _processCells(result.row),
         zones: result.zones,
         offsets: result.offsets,
         isHome: $scope.homeRow &&
-          $scope.homeRow.locationKey === result.city.key
+          $scope.homeRow.locationKey === result.zone.key
       };
     }
 
@@ -186,25 +186,25 @@ var worldtime = angular.module('worldtime', ['ui.bootstrap', 'ui.sortable']);
     $scope.addSuggestedRow = function() {
       var that = this;
       return $http.get($URL_ROOT + 'api/find_timezone', {
-        params: {q: this.city}
+        params: {q: this.zone}
       }).then(function(response) {
-        $scope.cityFailed = false;
+        $scope.zoneFailed = false;
         var timezone = response.data.result;
         if (!timezone) {
-          $scope.cityFailed = true;
+          $scope.zoneFailed = true;
           return;
         }
 
         _fetchRow(timezone.key).then(function(result) {
-          that.city = '';
+          that.zone = '';
           if ($scope.getRowIndex(timezone.key) >= 0)
             return;
           $scope.rows.push(_makeRow(result.data));
           if (!$scope.homeRow)
             $scope.setAsHome(timezone.key);
         }, function(error) {
-          if (error.data.error == 'city_not_found') {
-            $scope.cityFailed = true;
+          if (error.data.error == 'zone_not_found') {
+            $scope.zoneFailed = true;
           }
         });
       });
@@ -242,8 +242,8 @@ var worldtime = angular.module('worldtime', ['ui.bootstrap', 'ui.sortable']);
 
     $scope.sortByName = function() {
       $scope.sortByFunc(function(a, b) {
-        a = a.city.full_name.toLowerCase();
-        b = b.city.full_name.toLowerCase();
+        a = a.zone.full_name.toLowerCase();
+        b = b.zozoneull_name.toLowerCase();
         return a == b ? 0 : a < b ? -1 : 1;
       });
     };
@@ -256,8 +256,8 @@ var worldtime = angular.module('worldtime', ['ui.bootstrap', 'ui.sortable']);
   });
 
 
-  /* controller for the city auto completion */
-  worldtime.controller('CityTypeaheadCtrl', function($scope, $http) {
+  /* controller for the zone auto completion */
+  worldtime.controller('ZoneTypeaheadCtrl', function($scope, $http) {
     var LIMIT = 10;
 
     $scope.getSuggestions = function(input) {
@@ -266,8 +266,8 @@ var worldtime = angular.module('worldtime', ['ui.bootstrap', 'ui.sortable']);
       }).then(function(response) {
         var results = [];
         for (var i = 0, n = response.data.results.length; i < n; i++) {
-          var city = response.data.results[i];
-          results.push(city.full_name);
+          var zone = response.data.results[i];
+          results.push(zone.full_name);
         }
         return results;
       });

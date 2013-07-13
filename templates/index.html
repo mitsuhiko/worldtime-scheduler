@@ -11,11 +11,11 @@
     <div class="navbar">
       <div class="navbar-inner schedule-bar">
         <a class="brand">Schedule</a>
-        <div class="navbar-text navbar-caption pull-left">City:</div>
-        <form class="navbar-form pull-left" ng-controller="CityTypeaheadCtrl"
+        <div class="navbar-text navbar-caption pull-left">Zone or City:</div>
+        <form class="navbar-form pull-left" ng-controller="ZoneTypeaheadCtrl"
               ng-submit="addSuggestedRow()">
-          <div class="control-group" ng-class="{error: cityFailed}">
-            <input type="text" class="span3" autocomplete=off name=city ng-model="city"
+          <div class="control-group" ng-class="{error: zoneFailed}">
+            <input type="text" class="span3" autocomplete=off name=zone ng-model="zone"
               typeahead="state for state in getSuggestions($viewValue)">
             <button type="submit" class="btn">Add</button>
           </div>
@@ -54,13 +54,13 @@
                 tooltip="{{ row.offsets|describeoffset }}"><em>{{ row.offsets|offsetformat }}</em></span>
             <th class="location">
               <li class="dropdown">
-                <a class="dropdown-toggle locationname">{{ row.city.name }}</a>
+                <a class="dropdown-toggle locationname">{{ row.zone.name }}</a>
                 <ul class="dropdown-menu">
-                  <li><a ng-click="setAsHome(row.city.key)" ng-hide="row.isHome">Set as home</a>
-                  <li><a ng-click="removeRow(row.city.key)">Remove</a>
+                  <li><a ng-click="setAsHome(row.zone.key)" ng-hide="row.isHome">Set as home</a>
+                  <li><a ng-click="removeRow(row.zone.key)">Remove</a>
                 </ul>
               </li>
-              <span class="country">{{ row.city.country }}</span>
+              <span class="country">{{ row.zone.country }}</span>
               <span class="zones">
                 <em ng-repeat="zone in row.zones"
                   tooltip-placement="bottom"

@@ -1,5 +1,8 @@
 import os
+import pytz
+from datetime import datetime
 from flask import json
+from babel import dates
 
 
 os.chdir(os.path.abspath(os.path.dirname(__file__)))
@@ -69,9 +72,64 @@ def convert_cities():
         json.dump({'cities': cities}, f, indent=2)
 
 
+def convert_timezones():
+    timezones = {}
+    found = set()
+
+    today = datetime.utcnow()
+
+    for zone_name in pytz.all_timezones:
+        tzinfo = dates.get_timezone(zone_name)
+        if tzinfo is None:
+            continue
+        short_name = zone_name
+
+        try:
+            transition = dates.get_next_timezone_transition(tzinfo, today)
+        except TypeError:
+            continue
+        if transition is None:
+            key = tzinfo.tzname(today)
+            has_dst = False
+            name = dates.get_timezone_name(tzinfo)
+        else:
+            from_tz = transition.from_tz
+            to_tz = transition.to_tz
+            from_tzinfo = transition.from_tzinfo
+            to_tzinfo = transition.to_tzinfo
+            if transition.from_tzinfo.localize(today).dst():
+                dst_tz = from_tz
+                std_tz = to_tz
+                dst_tzinfo = from_tzinfo
+                std_tzinfo = to_tzinfo
+            else:
+                dst_tz = to_tz
+                std_tz = from_tz
+                dst_tzinfo = to_tzinfo
+                std_tzinfo = from_tzinfo
+            key = '%s/%s' % (std_tz, dst_tz)
+            name = u'%s / %s' % (
+                dates.get_timezone_name(std_tzinfo, zone_variation='standard'),
+                dates.get_timezone_name(dst_tzinfo, zone_variation='daylight')
+            )
+
+        if name in found:
+            continue
+        found.add(name)
+
+        timezones[short_name] = {
+            'short': key,
+            'name': name
+        }
+
+    with open('timezones.json', 'w') as f:
+        json.dump({'timezones': timezones}, f, indent=2)
+
+
 def main():
     convert_countries()
     convert_cities()
+    convert_timezones()
 
 
 if __name__ == '__main__':
