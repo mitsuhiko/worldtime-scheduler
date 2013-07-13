@@ -69,7 +69,7 @@
         </div>
         <table>
           <tr class="cells">
-            <td ng-repeat="cell in row.cells" class="slotwrapper">
+            <td ng-repeat="cell in row.cells" class="slotwrapper" ng-class="'cell-index-' + cell.idx">
               <div class=slot ng-class="{
                   daystart: cell.slot.hour == 0,
                   night: cell.slot.hour >= 22 || cell.slot.hour < 6,

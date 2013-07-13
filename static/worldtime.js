@@ -108,6 +108,28 @@ var worldtime = angular.module('worldtime', ['ui.bootstrap', 'ui.sortable']);
     $scope.zone = '';
     $scope.selectedDay = DateTime.now().toDateString();
     $scope.zoneFailed = false;
+    $scope.lastMarker = null;
+
+    /* current marker hover */
+    var currentMarker = $('<div class=marker></div>')
+      .appendTo('body');
+    var table = $('.timetable')
+      .bind('mousemove', function() {
+        var wrapper = document.querySelectorAll('td.slotwrapper:hover')[0];
+        if (!wrapper)
+          return
+        var idx = wrapper.className.match(/cell-index-(\d+)/)[1];
+        if (idx === $scope.lastMarker)
+          return
+        $scope.lastMarker = idx;
+        var tableOffset = table.offset();
+        currentMarker.css({
+          left: $(wrapper).offset().left - 2 + 'px',
+          top: tableOffset.top - 4 + 'px',
+          height: table.outerHeight() + 3 + 'px',
+          width: $('div.slot', wrapper).outerWidth() + 2 + 'px'
+        }).show();
+      });
 
     $('#datepicker').datepicker({
       format: 'dd-mm-yyyy',

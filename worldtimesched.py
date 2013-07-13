@@ -239,12 +239,14 @@ def api_get_row():
     zones_found = set()
     zones = []
 
+    idx = 0
     while hiter < day_utc_end:
         ht = away_tz.normalize(hiter.astimezone(away_tz))
         uc = pytz.UTC.normalize(ht.astimezone(pytz.UTC))
         item = {
             'slot': dump_local_date(ht),
             'utc': dump_local_date(uc),
+            'idx': idx
         }
         if home_tz is not None:
             hh = home_tz.normalize(hiter.astimezone(home_tz))
@@ -260,6 +262,7 @@ def api_get_row():
                 'is_dst': ht.dst().total_seconds() > 0,
             })
         hiter += timedelta(hours=1)
+        idx += 1
 
     if not all_offsets:
         all_offsets = [0]

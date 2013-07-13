@@ -53,6 +53,17 @@ h2 {
     color: #aaa;
 }
 
+/* marker */
+.marker {
+    position: absolute;
+    width: 10px;
+    height: 100px;
+    border: 2px solid black;
+    border-radius: 4px;
+    pointer-events: none;
+    display: none;
+}
+
 /* timetable */
 .timetable div.time-row {
     background: white;
@@ -69,7 +80,7 @@ h2 {
 }
 
 .timetable div.location {
-    width: 300px;
+    width: 260px;
 }
 
 .timetable div.location span.country {
