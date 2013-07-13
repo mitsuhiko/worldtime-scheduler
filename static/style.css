@@ -54,28 +54,31 @@ h2 {
 }
 
 /* timetable */
-.timetable {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-}
-
-.timetable table {
-    width: 100%;
-    table-layout: fixed;
-}
-
-.timetable li.time-row {
+.timetable div.time-row {
     background: white;
     border: 1px solid rgb(212, 212, 212);
     border-radius: 4px;
     margin: 4px 0 4px 0;
+    height: 70px;
 }
 
-.timetable li.time-row.home {
+.timetable div.time-row.home {
     background-color: #eee;
     background-image: linear-gradient(to bottom, #fafafa, #eee);
     background-repeat: repeat-x;
+}
+
+.timetable div.location {
+    width: 300px;
+}
+
+.timetable div.location span.country {
+    color: #666;
+}
+
+.timetable div.location span.country em {
+    color: black;
+    font-style: normal;
 }
 
 .timetable li.dropdown {
@@ -90,45 +93,29 @@ h2 {
     padding: 3px 0;
 }
 
-.timetable .cells td.handle {
+.timetable div.handle {
+    float: left;
     width: 10px;
+    height: 70px;
     background-color: #ddd;
     background-image: linear-gradient(transparent 50%, rgba(255,255,255,.5) 50%);
     background-size: 10px 10px;
     cursor: pointer;
 }
 
-.timetable .cells .offset {
-    width: 32px;
-    padding: 0 10px 0 0;
-    text-align: right;
-    cursor: pointer;
-}
-
-.timetable .cells .offset em {
-    font-family: 'Roboto Condensed';
-    font-weight: 400;
-    font-size: 17px;
-    font-style: normal;
-}
-
-.timetable .cells .location {
-    text-align: left;
-    padding-right: 10px;
-    font-size: 13px;
-    font-weight: 400;
-}
-
-.timetable .locationname {
+.timetable div.offset {
+    float: left;
+    height: 70px;
+    line-height: 70px;
+    width: 50px;
+    text-align: center;
     font-weight: 500;
+    color: black;
+    font-size: 18px;
 }
 
-.timetable .country {
-    color: #666;
-}
-
-.timetable .zones {
-    margin-left: 5px;
+.timetable div.offset em {
+    font-style: normal;
 }
 
 .timetable .zones em {
@@ -142,6 +129,27 @@ h2 {
     border-radius: 2px;
     font-style: normal;
     cursor: pointer;
+}
+
+.timetable div.meta {
+    float: left;
+}
+
+.timetable table {
+    width: 620px;
+    table-layout: fixed;
+    float: right;
+}
+
+.timetable div.transitioninfo {
+    float: right;
+    padding: 0 10px 0 0;
+    color: #666;
+    font-size: 12px;
+}
+
+.timetable div.transitioninfo span.transition {
+    color: black;
 }
 
 .timetable .cells td {

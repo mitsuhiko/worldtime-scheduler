@@ -86,15 +86,21 @@ def get_zone(key):
 
 
 def get_next_transition(timezone, dt=None):
-    rv = get_next_timezone_transition(timezone, dt)
-    if rv is None:
+    if dt is None:
+        dt = datetime.utcnow()
+    try:
+        rv = get_next_timezone_transition(timezone, dt)
+        if rv is None:
+            return None
+    except TypeError:
         return None
     return {
         'activates': rv.activates,
         'from_offset': rv.from_offset,
         'to_offset': rv.to_offset,
         'from_tz': rv.from_tz,
-        'to_tz': rv.to_tz
+        'to_tz': rv.to_tz,
+        'is_soon': (rv.activates - dt.replace(tzinfo=None)) < timedelta(days=7)
     }
 
 

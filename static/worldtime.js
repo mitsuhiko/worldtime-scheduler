@@ -57,7 +57,7 @@ var worldtime = angular.module('worldtime', ['ui.bootstrap', 'ui.sortable']);
   DateTime.parse = function(str) {
     var months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun',
                   'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
-    var m = str.match(/\w+,\s+(\d+)\s+(\w+)\s+(\d+)\s+(\d+):(\d+):(\d+)(\s+(GMT|[+-]\d+))?(\s+\((\w+)\))/);
+    var m = str.match(/\w+,\s+(\d+)\s+(\w+)\s+(\d+)\s+(\d+):(\d+):(\d+)(\s+(GMT|[+-]\d+))?(\s+\((\w+)\))?/);
     if (!m)
       return null;
 
@@ -138,11 +138,15 @@ var worldtime = angular.module('worldtime', ['ui.bootstrap', 'ui.sortable']);
     }
 
     function _makeRow(result) {
+      var ti = result.next_transition || null;
+      if (ti)
+        ti.activates = DateTime.parse(ti.activates);
       return {
         locationKey: result.zone.key,
         zone: result.zone,
         cells: _processCells(result.row),
         zones: result.zones,
+        nextTransition: ti,
         offsets: result.offsets,
         isHome: $scope.homeRow &&
           $scope.homeRow.locationKey === result.zone.key
@@ -310,6 +314,15 @@ var worldtime = angular.module('worldtime', ['ui.bootstrap', 'ui.sortable']);
   worldtime.filter('datetimeformat', function() {
     return function(dt) {
       return dt.toString();
+    };
+  });
+
+  worldtime.filter('timezonetransitionformat', function() {
+    return function(ti) {
+      if (!ti)
+        return '';
+      var d = ti.activates;
+      return ti.from_tz + ' to ' + ti.to_tz + ' on ' + d.toString();
     };
   });
 })();
