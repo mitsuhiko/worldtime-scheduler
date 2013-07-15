@@ -38,7 +38,7 @@
               <li><a ng-click="sortByName()">Sort by name</a>
               <li class="divider">
               <li><a>Copy to clipboard</a>
-              <li><a>Link to this table</a>
+              <li><a ng-click="linkToThisTable()">Link to this table</a>
             </ul>
         </ul>
       </div>
@@ -48,9 +48,17 @@
       <div ng-repeat="row in rows" class="time-row" ng-class="{home: row.isHome}">
         <div class="handle"></div>
         <div class="meta">
-          <div class="offset"><span
+          <div class="timeinfo"
               tooltip-placement="bottom"
-              tooltip="{{ row.offsets|describeoffset }}"><em>{{ row.offsets|offsetformat }}</em></span></div>
+              tooltip="{{ row.offsets|describeoffset }}"
+              ng-class="{clockless: !row.realTimeClock.isActive}">
+            <div class="offset"><span><em>{{ row.offsets|offsetformat }}</em></span></div>
+            <div class="rtclock" ng-hide="!row.realTimeClock.isActive">
+              <span class=hour>{{ row.realTimeClock.hour }}</span>
+              <span class="delim">:</span>
+              <span class=minute>{{ row.realTimeClock.minute|padint:2 }}</span>
+            </div>
+          </div>
           <div class="location">
             <li class="dropdown">
               <a class="dropdown-toggle locationname">{{ row.zone.name }}</a>

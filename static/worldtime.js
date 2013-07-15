@@ -1,6 +1,10 @@
 'use strict';
 
-var worldtime = angular.module('worldtime', ['ui.bootstrap', 'ui.sortable']);
+var worldtime = angular
+  .module('worldtime', ['ui.bootstrap', 'ui.sortable'])
+  .config(function($locationProvider) {
+    $locationProvider.html5Mode(true);
+  });
 
 (function() {
 
@@ -11,6 +15,39 @@ var worldtime = angular.module('worldtime', ['ui.bootstrap', 'ui.sortable']);
     for (var i = 0; i < missing; i++)
       prefix += '0';
     return prefix + rv;
+  }
+
+  function RealTimeClock(clockInfo) {
+    this.offset = clockInfo.offset;
+    if (clockInfo.next_offset) {
+      this.nextOffset = clockInfo.next_offset;
+      this.activates = new Date(clockInfo.activates).getTime() / 1000;
+    } else {
+      this.nextOffset = null;
+      this.activates = null;
+    }
+    this.isActive = true;
+    this.refresh();
+  }
+
+  RealTimeClock.prototype.refresh = function() {
+    var d = new Date();
+
+    /* transition kicked in */
+    if (this.activates != null &&
+        d.getTime() / 1000 >= this.activates) {
+      this.offset = this.nextOffset;
+      this.nextOffset = null;
+      this.activates = null;
+    }
+
+    d.setUTCSeconds(d.getUTCSeconds() + this.offset);
+
+    var oldHour = this.hour;
+    var oldMinute = this.minute;
+    this.hour = d.getUTCHours();
+    this.minute = d.getUTCMinutes();
+    return oldHour != this.hour || oldMinute != this.minute;
   }
 
   /* non shitty datetime object */
@@ -96,34 +133,26 @@ var worldtime = angular.module('worldtime', ['ui.bootstrap', 'ui.sortable']);
     for (var i = 0, n = cells.length; i < n; i++) {
       var cell = cells[i];
       cell.slot = DateTime.parse(cell.slot);
+      cell.utc = DateTime.parse(cell.utc);
+      cell.idx = i;
     }
     return cells;
   }
 
 
   /* controller for the whole table */
-  worldtime.controller('TimezoneTableCtrl', function($scope, $http) {
+  worldtime.controller('TimezoneTableCtrl', function($scope, $http, $location, $q) {
     $scope.rows = [];
     $scope.homeRow = null;
     $scope.zone = '';
     $scope.selectedDay = DateTime.now().toDateString();
     $scope.zoneFailed = false;
-    $scope.lastMarker = null;
 
-    /* current marker hover */
-    var currentMarker = $('<div class=marker></div>')
-      .appendTo('.timetable');
-    var table = $('.timetable')
-      .bind('mousemove', function() {
-        var wrapper = document.querySelectorAll('td.slotwrapper:hover')[0];
-        if (!wrapper)
-          return
-        var idx = wrapper.className.match(/cell-index-(\d+)/)[1];
-        if (idx === $scope.lastMarker)
-          return
-        $scope.lastMarker = idx;
-        $scope.moveMarker();
-      });
+    /* current clock */
+    window.setInterval(function() {
+      if ($scope.updateRealTimeClocks())
+        $scope.$apply();
+    }, 1000);
 
     $('#datepicker').datepicker({
       format: 'dd-mm-yyyy',
@@ -164,6 +193,7 @@ var worldtime = angular.module('worldtime', ['ui.bootstrap', 'ui.sortable']);
         zones: result.zones,
         nextTransition: ti,
         offsets: result.offsets,
+        realTimeClock: new RealTimeClock(result.rtclock),
         isHome: $scope.homeRow &&
           $scope.homeRow.locationKey === result.zone.key
       };
@@ -172,6 +202,7 @@ var worldtime = angular.module('worldtime', ['ui.bootstrap', 'ui.sortable']);
     function _refreshRow(i, locationKey) {
       _fetchRow(locationKey).then(function(result) {
         $scope.rows[i] = _makeRow(result.data);
+        $scope.updateRealTimeClocks();
       });
     }
 
@@ -235,6 +266,31 @@ var worldtime = angular.module('worldtime', ['ui.bootstrap', 'ui.sortable']);
       });
     };
 
+    $scope.addTimezoneRow = function(key) {
+      var deferred = $q.defer();
+      $http.get($URL_ROOT + 'api/find_timezone', {
+        params: {q: key}
+      }).then(function(response) {
+        var timezone = response.data.result;
+        if (!timezone) {
+          deferred.reject('Timezone not found');
+          return;
+        }
+        _fetchRow(timezone.key).then(function(result) {
+          if ($scope.getRowIndex(timezone.key) >= 0) {
+            deferred.reject('Row already added before');
+            return;
+          }
+          var row = _makeRow(result.data);
+          $scope.rows.push(row);
+          if (!$scope.homeRow)
+            $scope.setAsHome(timezone.key);
+          deferred.resolve(row);
+        });
+      });
+      return deferred.promise;
+    };
+
     $scope.setAsHome = function(locationKey) {
       var wasNull = $scope.homeRow === null;
       if (!locationKey) {
@@ -268,7 +324,7 @@ var worldtime = angular.module('worldtime', ['ui.bootstrap', 'ui.sortable']);
     $scope.sortByName = function() {
       $scope.sortByFunc(function(a, b) {
         a = a.zone.full_name.toLowerCase();
-        b = b.zozoneull_name.toLowerCase();
+        b = b.zone.full_name.toLowerCase();
         return a == b ? 0 : a < b ? -1 : 1;
       });
     };
@@ -279,26 +335,82 @@ var worldtime = angular.module('worldtime', ['ui.bootstrap', 'ui.sortable']);
       $scope.rows = copy;
     };
 
-    $scope.moveMarker = function() {
-      if (!$scope.lastMarker)
-        return;
-      var wrapper = $($('td.cell-index-' + $scope.lastMarker)[0]);
-      var tableOffset = table.offset();
-      currentMarker.css({
-        left: $(wrapper).offset().left - 2 + 'px',
-        top: tableOffset.top - 4 + 'px',
-        height: $scope.rows.length * 76 + 'px',
-        width: $('div.slot', wrapper).outerWidth() + 2 + 'px'
-      }).show();
+    $scope.updateRealTimeClocks = function() {
+      var isToday = $scope.selectedDay == DateTime.now().toDateString();
+      var anythingChanged = false;
+      for (var i = 0; i < $scope.rows.length; i++) {
+        var row = $scope.rows[i];
+        row.realTimeClock.isActive = isToday;
+        if (isToday) {
+          var rv = row.realTimeClock.refresh();
+          anythingChanged = anythingChanged || rv;
+        }
+      }
+      return anythingChanged;
     };
 
-    // make sure marker stays in sync
-    $scope.$watch('rows.length', function(newVal, oldVal) {
-      $scope.moveMarker();
+    $scope.linkToThisTable = function() {
+    };
+
+    /* url support */
+
+    $scope.$watchCollection('rows', function() {
+      var buf = [];
+      for (var i = 0; i < $scope.rows.length; i++) {
+        var row = $scope.rows[i];
+        var item = row.locationKey.replace('/', '::');
+        if (row.isHome)
+          item += '!';
+        buf.push(item);
+      }
+      if (buf.length > 0)
+        $location.search({tz: buf.join(',')});
+      else
+        $location.search({});
     });
-    $(window).bind('resize', function() {
-      $scope.moveMarker();
-    });
+
+    $scope.syncWithURL = function() {
+      var allZones = [];
+      var homeZone = null;
+      var zones = ($location.search().tz || '').split(',');
+      if (zones.length == 1 && zones[0] == '')
+        zones = [];
+      for (var i = 0; i < zones.length; i++) {
+        var zoneName = zones[i].replace('::', '/');
+        if (zoneName[zoneName.length - 1] == '!') {
+          zoneName = zoneName.substr(0, zoneName.length - 1);
+          homeZone = zoneName;
+        }
+        allZones.push(zoneName);
+      }
+
+      if ($scope.rows.length > 0 || allZones.length == 0)
+        return;
+
+      if (!homeZone)
+        homeZone = allZones[0];
+
+      $scope.addTimezoneRow(homeZone).then(function() {
+        var promises = [];
+        for (var i = 0; i < allZones.length; i++) {
+          var zone = allZones[i];
+          if (zone == homeZone)
+            continue;
+          promises.push($scope.addTimezoneRow(zone));
+        }
+        $q.all(promises).then(function() {
+          $scope.sortByFunc(function(a, b) {
+            var idx1 = allZones.indexOf(a.locationKey);
+            var idx2 = allZones.indexOf(b.locationKey);
+            return idx1 - idx2;
+          });
+        });
+      });
+    };
+
+    $scope._location = $location;
+    $scope.$watch('_location.search()', $scope.syncWithURL);
+    $scope.syncWithURL();
   });
 
 
@@ -364,7 +476,9 @@ var worldtime = angular.module('worldtime', ['ui.bootstrap', 'ui.sortable']);
       if (!ti)
         return '';
       var d = ti.activates;
-      return ti.from_tz + ' to ' + ti.to_tz + ' on ' + d.toString();
+      var hours = (ti.to_offset - ti.from_offset) / 3600;
+      var diff = (hours > 0 ? '+' : '') + hours + ' hour' + (hours != 1 ? 's' : '');
+      return ti.from_tz + ' to ' + ti.to_tz + ' (' + diff + ') on ' + d.toString();
     };
   });
 })();

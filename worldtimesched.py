@@ -48,6 +48,7 @@ def _load_data():
             city = cities[city_key]
             country_name = countries[city['country']]['name']
             city['key'] = city_key
+            city['ikey'] = city_key.lower()
             city['type'] = 'city'
             city['full_display_name'] = city['display_name'] + ', ' + country_name
             city['search_name'] = city['full_display_name'].lower()
@@ -59,6 +60,7 @@ def _load_data():
         for timezone_key in timezones:
             timezone = timezones[timezone_key]
             timezone['key'] = timezone_key
+            timezone['ikey'] = timezone_key.lower()
             timezone['timezone'] = timezone_key
             timezone['type'] = 'timezone'
             timezone['full_display_name'] = '%s (%s)' % (
@@ -104,6 +106,25 @@ def get_next_transition(timezone, dt=None):
     }
 
 
+def get_rt_clock_info(timezone):
+    now = datetime.utcnow()
+    try:
+        ti = get_next_timezone_transition(timezone, now)
+    except TypeError:
+        ti = None
+    if ti is not None:
+        return {
+            'offset': ti.from_offset,
+            'next_offset': ti.to_offset,
+            'activates': ti.activates
+        }
+    return {
+        'offset': timezone.utcoffset(now).total_seconds(),
+        'next_offset': None,
+        'activates': None
+    }
+
+
 def _make_date(input):
     try:
         day, month, year = map(int, input.split('-', 2))
@@ -119,11 +140,9 @@ def _find_timezones(q, find_one=False, limit=None):
     qw = _split_re.split(q)
     exact_match = None
 
-    # XXX: add actual timezones (PSD, GMT etc.)
-
     if qw:
         for timezone in timezones.values():
-            if timezone['search_name'] == q:
+            if timezone['search_name'] == q or timezone['ikey'] == q:
                 _push((0, 0, timezone))
                 exact_match = timezone
                 continue
@@ -132,7 +151,7 @@ def _find_timezones(q, find_one=False, limit=None):
                 _push((1, match_pos, timezone))
                 continue
         for city in cities.values():
-            if city['search_name'] == q:
+            if city['search_name'] == q or city['ikey'] == q:
                 _push((0, 0, city))
                 exact_match = city
                 continue
@@ -239,14 +258,12 @@ def api_get_row():
     zones_found = set()
     zones = []
 
-    idx = 0
     while hiter < day_utc_end:
         ht = away_tz.normalize(hiter.astimezone(away_tz))
         uc = pytz.UTC.normalize(ht.astimezone(pytz.UTC))
         item = {
             'slot': dump_local_date(ht),
             'utc': dump_local_date(uc),
-            'idx': idx
         }
         if home_tz is not None:
             hh = home_tz.normalize(hiter.astimezone(home_tz))
@@ -262,7 +279,6 @@ def api_get_row():
                 'is_dst': ht.dst().total_seconds() > 0,
             })
         hiter += timedelta(hours=1)
-        idx += 1
 
     if not all_offsets:
         all_offsets = [0]
@@ -281,7 +297,8 @@ def api_get_row():
             'day_start': all_offsets[0],
             'day_end': all_offsets[-1],
             'mean': mean_offset
-        }
+        },
+        'rtclock': get_rt_clock_info(away_tz)
     })
 
 

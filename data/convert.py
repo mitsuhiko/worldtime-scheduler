@@ -108,10 +108,7 @@ def convert_timezones():
                 dst_tzinfo = to_tzinfo
                 std_tzinfo = from_tzinfo
             key = '%s/%s' % (std_tz, dst_tz)
-            name = u'%s / %s' % (
-                dates.get_timezone_name(std_tzinfo, zone_variation='standard'),
-                dates.get_timezone_name(dst_tzinfo, zone_variation='daylight')
-            )
+            name = dates.get_timezone_name(std_tzinfo, zone_variation='generic')
 
         if name in found:
             continue

@@ -53,17 +53,6 @@ h2 {
     color: #aaa;
 }
 
-/* marker */
-.marker {
-    position: absolute;
-    width: 10px;
-    height: 100px;
-    border: 2px solid black;
-    border-radius: 4px;
-    pointer-events: none;
-    display: none;
-}
-
 /* timetable */
 .timetable div.time-row {
     background: white;
@@ -114,19 +103,49 @@ h2 {
     cursor: pointer;
 }
 
-.timetable div.offset {
+.timetable div.timeinfo {
     float: left;
-    height: 70px;
-    line-height: 70px;
-    width: 50px;
+    width: 60px;
+    text-align: center;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.timetable div.timeinfo div.offset {
+    padding-top: 14px;
+    font-size: 17px;
     text-align: center;
     font-weight: 500;
     color: black;
-    font-size: 18px;
 }
 
-.timetable div.offset em {
+.timetable div.timeinfo.clockless div.offset {
+    padding-top: 24px;
+}
+
+.timetable div.timeinfo div.offset em {
     font-style: normal;
+}
+
+.timetable div.timeinfo div.rtclock {
+    white-space: no-wrap;
+    font-size: 0;
+    color: #444;
+}
+
+.timetable div.timeinfo div.rtclock .delim {
+    color: #888;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 0 2px;
+}
+
+.timetable div.timeinfo div.rtclock .hour,
+.timetable div.timeinfo div.rtclock .minute {
+    font-size: 13px;
+    font-weight: 500;
+    display: inline;
+    color: black;
 }
 
 .timetable .zones em {
@@ -169,7 +188,7 @@ h2 {
     vertical-align: middle;
 }
 
-.timetable .hour {
+.timetable div.slot .hour {
     display: block;
     font-family: 'Roboto Condensed';
     font-size: 19px;
@@ -178,7 +197,7 @@ h2 {
     line-height: 25px;
 }
 
-.timetable .minute {
+.timetable div.slot .minute {
     display: block;
     font-size: 11px;
     font-weight: 300;
