@@ -78,7 +78,7 @@ def convert_timezones():
 
     today = datetime.utcnow()
 
-    for zone_name in pytz.all_timezones:
+    for zone_name in sorted(pytz.all_timezones):
         tzinfo = dates.get_timezone(zone_name)
         if tzinfo is None:
             continue

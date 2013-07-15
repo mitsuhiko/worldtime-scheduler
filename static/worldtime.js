@@ -100,7 +100,7 @@ var worldtime = angular
 
     return new DateTime(
       parseInt(m[3], 10),
-      parseInt(months.indexOf(m[2].toLowerCase()) + 1) + 1,
+      parseInt(months.indexOf(m[2].toLowerCase()) + 1),
       parseInt(m[1], 10),
       parseInt(m[4], 10),
       parseInt(m[5], 10),
