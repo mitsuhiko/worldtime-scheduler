@@ -39,7 +39,7 @@ def convert_cities():
             if not line:
                 continue
 
-            main_name = line[1]
+            main_name = line[2]
             country = line[8]
             state = country == 'US' and line[10] or None
             population = int(line[14])

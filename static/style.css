@@ -33,6 +33,16 @@ h2 {
 .schedule-bar           { margin: 20px 0; }
 .navbar .control-group  { margin: 0; padding: 0; }
 
+/* loading indicator */
+.navbar span.loading-indicator {
+    margin-top: 8px;
+    display: block;
+    float: left;
+    width: 28px;
+    height: 24px;
+    background: url(loading.gif) no-repeat;
+}
+
 /* datepicker */
 #datepicker {
     margin: 5px 0 0 0;

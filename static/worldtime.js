@@ -147,6 +147,7 @@ var worldtime = angular
     $scope.zone = '';
     $scope.selectedDay = DateTime.now().toDateString();
     $scope.zoneFailed = false;
+    $scope.loadingIndicatorDepth = 0;
 
     /* current clock */
     window.setInterval(function() {
@@ -179,7 +180,15 @@ var worldtime = angular
       var params = {date: $scope.selectedDay, away: locationKey};
       if ($scope.homeRow)
         params.home = $scope.homeRow.locationKey;
-      return $http.get($URL_ROOT + 'api/row', {params: params});
+      $scope.pushLoadingIndicator();
+      return $http.get($URL_ROOT + 'api/row', {params: params})
+        .then(function(result) {
+          $scope.popLoadingIndicator();
+          return result;
+        }, function(error) {
+          $scope.popLoadingIndicator();
+          return error;
+        });
     }
 
     function _makeRow(result) {
@@ -349,7 +358,12 @@ var worldtime = angular
       return anythingChanged;
     };
 
-    $scope.linkToThisTable = function() {
+    $scope.pushLoadingIndicator = function() {
+      $scope.loadingIndicatorDepth += 1;
+    };
+
+    $scope.popLoadingIndicator = function() {
+      $scope.loadingIndicatorDepth = Math.max($scope.loadingIndicatorDepth - 1, 0);
     };
 
     /* url support */
@@ -358,25 +372,27 @@ var worldtime = angular
       var buf = [];
       for (var i = 0; i < $scope.rows.length; i++) {
         var row = $scope.rows[i];
-        var item = row.locationKey.replace('/', '::');
+        var item = row.locationKey.replace(/\//g, '::');
         if (row.isHome)
           item += '!';
         buf.push(item);
       }
+      var params = {};
+      params.date = $scope.selectedDay;
       if (buf.length > 0)
-        $location.search({tz: buf.join(',')});
-      else
-        $location.search({});
+        params.tz = buf.join(',');
+      $location.search(params);
     });
 
     $scope.syncWithURL = function() {
       var allZones = [];
       var homeZone = null;
-      var zones = ($location.search().tz || '').split(',');
+      var params = $location.search();
+      var zones = (params.tz || '').split(',');
       if (zones.length == 1 && zones[0] == '')
         zones = [];
       for (var i = 0; i < zones.length; i++) {
-        var zoneName = zones[i].replace('::', '/');
+        var zoneName = zones[i].replace(/::/g, '/');
         if (zoneName[zoneName.length - 1] == '!') {
           zoneName = zoneName.substr(0, zoneName.length - 1);
           homeZone = zoneName;
@@ -387,8 +403,15 @@ var worldtime = angular
       if ($scope.rows.length > 0 || allZones.length == 0)
         return;
 
+      $scope.pushLoadingIndicator();
+
       if (!homeZone)
         homeZone = allZones[0];
+
+      if (params.date) {
+        $scope.selectedDay = params.date;
+        console.log($scope.selectedDay);
+      }
 
       $scope.addTimezoneRow(homeZone).then(function() {
         var promises = [];
@@ -404,6 +427,7 @@ var worldtime = angular
             var idx2 = allZones.indexOf(b.locationKey);
             return idx1 - idx2;
           });
+          $scope.popLoadingIndicator();
         });
       });
     };
