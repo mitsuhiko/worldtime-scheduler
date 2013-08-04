@@ -1,0 +1,7 @@
+Babel==1.3
+Flask==0.10
+gunicorn==17.5
+Werkzeug==0.9.3
+Jinja2==2.7
+pytz==2013b
+MarkupSafe==0.18
