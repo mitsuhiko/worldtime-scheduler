@@ -2,3 +2,5 @@
 *.pyo
 data/*.json
 .DS_Store
+.heroku-git
+.heroku-git-worktree
