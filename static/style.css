@@ -107,9 +107,7 @@ h2 {
     float: left;
     width: 10px;
     height: 70px;
-    background-color: #ddd;
-    background-image: linear-gradient(transparent 50%, rgba(255,255,255,.5) 50%);
-    background-size: 10px 10px;
+    background-color: #dadada;
     cursor: pointer;
 }
 
