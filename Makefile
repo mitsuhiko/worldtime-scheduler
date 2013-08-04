@@ -4,7 +4,7 @@ init-heroku:
 	@$(GIT_PREFIX) git init
 	@$(GIT_PREFIX) git remote add heroku git@heroku.com:worldtimesched.git
 	@$(GIT_PREFIX) mkdir .heroku-git-worktree
-	@cp -R heroku-specifics/* .heroku-git-workdtree
+	@cp -R heroku-specifics/* .heroku-git-worktree
 
 deploy:
 	@rsync -a ./ .heroku-git-worktree/
