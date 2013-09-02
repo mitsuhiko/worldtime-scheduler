@@ -1,3 +1,4 @@
+/* global $URL_ROOT:false */
 'use strict';
 
 var worldtime = angular
@@ -34,7 +35,7 @@ var worldtime = angular
     var d = new Date();
 
     /* transition kicked in */
-    if (this.activates != null &&
+    if (this.activates !== null &&
         d.getTime() / 1000 >= this.activates) {
       this.offset = this.nextOffset;
       this.nextOffset = null;
@@ -48,7 +49,7 @@ var worldtime = angular
     this.hour = d.getUTCHours();
     this.minute = d.getUTCMinutes();
     return oldHour != this.hour || oldMinute != this.minute;
-  }
+  };
 
   /* non shitty datetime object */
   function DateTime(year, month, day, hour, minute,
@@ -70,7 +71,7 @@ var worldtime = angular
     var sign = offset[0] == '+' ? 1 : offset[0] == '-' ? -1 : 0;
     var h = offset.substr(1, 2);
     var m = offset.substr(3, 2);
-    return (parseInt(h, 10) * 60 + parseInt(m, 10)) * 60;
+    return sign * ((parseInt(h, 10) * 60 + parseInt(m, 10)) * 60);
   }
 
   DateTime.now = function() {
@@ -89,7 +90,7 @@ var worldtime = angular
       d.getTimezoneOffset(),
       d.toString().match(/\((.*)\)$/)[1] || 'local'
     );
-  }
+  };
 
   DateTime.parse = function(str) {
     var months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun',
@@ -100,7 +101,7 @@ var worldtime = angular
 
     return new DateTime(
       parseInt(m[3], 10),
-      parseInt(months.indexOf(m[2].toLowerCase()) + 1),
+      parseInt(months.indexOf(m[2].toLowerCase()) + 1, 10),
       parseInt(m[1], 10),
       parseInt(m[4], 10),
       parseInt(m[5], 10),
@@ -108,7 +109,7 @@ var worldtime = angular
       0,
       _parseOffset(m[8]),
       m[10] || null
-    )
+    );
   };
 
   DateTime.prototype.getMonthName = function() {
@@ -245,7 +246,7 @@ var worldtime = angular
 
     $scope.addSuggestedRow = function() {
       var that = this;
-      if (this.zone == '') {
+      if (this.zone === '') {
         $scope.zoneFailed = false;
         return;
       }
@@ -301,14 +302,15 @@ var worldtime = angular
     };
 
     $scope.setAsHome = function(locationKey) {
+      var i, n, row;
       var wasNull = $scope.homeRow === null;
       if (!locationKey) {
         $scope.homeRow = null;
         return;
       }
 
-      for (var i = 0, n = $scope.rows.length; i < n; i++) {
-        var row = $scope.rows[i];
+      for (i = 0, n = $scope.rows.length; i < n; i++) {
+        row = $scope.rows[i];
         if (row.locationKey !== locationKey) {
           row.isHome = false;
         } else {
@@ -318,8 +320,8 @@ var worldtime = angular
       }
 
       if (!wasNull)
-        for (var i = 0, n = $scope.rows.length; i < n; i++) {
-          var row = $scope.rows[i];
+        for (i = 0, n = $scope.rows.length; i < n; i++) {
+          row = $scope.rows[i];
           _refreshRow(i, row.locationKey);
         }
     };
@@ -389,7 +391,7 @@ var worldtime = angular
       var homeZone = null;
       var params = $location.search();
       var zones = (params.tz || '').split(',');
-      if (zones.length == 1 && zones[0] == '')
+      if (zones.length == 1 && zones[0] === '')
         zones = [];
       for (var i = 0; i < zones.length; i++) {
         var zoneName = zones[i].replace(/::/g, '/');
@@ -400,7 +402,7 @@ var worldtime = angular
         allZones.push(zoneName);
       }
 
-      if ($scope.rows.length > 0 || allZones.length == 0)
+      if ($scope.rows.length > 0 || allZones.length === 0)
         return;
 
       $scope.pushLoadingIndicator();
@@ -467,7 +469,7 @@ var worldtime = angular
     return function(zone) {
       var rv = 'UTC';
       var hours = zone.offset / 3600;
-      if (hours != 0)
+      if (hours !== 0)
         rv += ' ' + (hours > 0 ? '+' : '') + hours + ' hours';
       if (zone.is_dst)
         rv += ' (DST observed)';
@@ -478,7 +480,7 @@ var worldtime = angular
   worldtime.filter('describeoffset', function() {
     return function(offsets) {
       var hours = offsets.mean / 3600;
-      return hours == 0 ? 'Your home' : (hours > 0 ? '+' : '') + hours + ' hours from home';
+      return hours === 0 ? 'Your home' : (hours > 0 ? '+' : '') + hours + ' hours from home';
     };
   });
 
